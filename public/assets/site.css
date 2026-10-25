@@ -21,3 +21,20 @@ body{background:#faf7ee;margin:0;font:15px/1.7 Arial,sans-serif;color:#30322f}.f
 
 .reviews .review-track{scrollbar-width:none;-ms-overflow-style:none}.reviews .review-track::-webkit-scrollbar{display:none}
 .class-link{display:block;padding:20px 0;border-bottom:1px solid #d6c8bc}.class-link p{margin:10px 0}.class-link span{font-size:12px}
+
+/* Mobile polish: admin and tap targets (desktop unchanged above 760px) */
+@media(max-width:760px){
+.admin-area{overflow-wrap:anywhere}
+.admin-area .admin-nav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.admin-area .admin-nav a,.admin-area .admin-nav button{display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 12px;border:1px solid #d6c8bc;background:transparent;color:inherit;font:inherit;font-size:14px;text-align:center;text-decoration:none;border-radius:0}
+.admin-area button,.admin-area select,.admin-area input:not([type=checkbox]):not([type=radio]):not([type=hidden]),.admin-area textarea{min-height:46px;font-size:16px}
+.admin-area button{padding:10px 16px}
+.admin-area input,.admin-area select,.admin-area textarea{max-width:100%;box-sizing:border-box}
+.admin-area table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.admin-area form{padding:16px}
+.admin-area h1{font-size:46px}
+.admin-area .stats-grid{grid-template-columns:1fr 1fr}
+.site-head nav a{display:inline-flex;align-items:center;min-height:44px}
+footer a{display:inline-block;padding:8px 0;min-height:24px}
+input,select,textarea{font-size:16px}
+}

@@ -1,15 +1,22 @@
 <?php
 declare(strict_types=1);
 $root = dirname(__DIR__);
+$GLOBALS['app_env_values'] = [];
+function app_env(string $key): string|false {
+    if (array_key_exists($key, $GLOBALS['app_env_values'])) return $GLOBALS['app_env_values'][$key];
+    return getenv($key);
+}
 if (is_file($root.'/.env')) {
     foreach (file($root.'/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         $line = trim($line);
         if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) continue;
         [$key,$value] = explode('=', $line, 2);
-        if (preg_match('/^[A-Z_][A-Z0-9_]*$/', trim($key)) && getenv(trim($key)) === false) putenv(trim($key).'='.trim($value, " \t\n\r\0\x0B\"'"));
+        $key = trim($key);
+        // Some shared hosts disable putenv(), so values live in app_env() instead of the process environment.
+        if (preg_match('/^[A-Z_][A-Z0-9_]*$/', $key) && getenv($key) === false) $GLOBALS['app_env_values'][$key] = trim($value, " \t\n\r\0\x0B\"'");
     }
 }
-date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'Asia/Kolkata');
+date_default_timezone_set(app_env('APP_TIMEZONE') ?: 'Asia/Kolkata');
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 ini_set('error_log', $root.'/storage/logs/php.log');
@@ -21,14 +28,14 @@ header('X-Frame-Options: DENY');
 header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'nonce-{$cspNonce}'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
 }
 ini_set('session.use_strict_mode', '1');
-session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','secure'=>filter_var(getenv('SESSION_SECURE') ?: 'false',FILTER_VALIDATE_BOOLEAN)]);
+session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','secure'=>filter_var(app_env('SESSION_SECURE') ?: 'false',FILTER_VALIDATE_BOOLEAN)]);
 session_start();
 function e(mixed $value): string { return htmlspecialchars((string)$value, ENT_QUOTES|ENT_SUBSTITUTE, 'UTF-8'); }
 function db(): PDO {
     static $db;
-    if (getenv('DB_USER') === false || getenv('DB_USER') === '') throw new RuntimeException('Database user is not configured');
+    if (app_env('DB_USER') === false || app_env('DB_USER') === '') throw new RuntimeException('Database user is not configured');
     if (!extension_loaded('pdo_mysql')) throw new RuntimeException('MySQL driver unavailable');
-    if (!$db) $db = new PDO('mysql:host='.(getenv('DB_HOST') ?: '127.0.0.1').';port='.(getenv('DB_PORT') ?: '3306').';dbname='.(getenv('DB_NAME') ?: 'escalate_classes').';charset=utf8mb4',getenv('DB_USER') ?: '',getenv('DB_PASSWORD') ?: '',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false]);
+    if (!$db) $db = new PDO('mysql:host='.(app_env('DB_HOST') ?: '127.0.0.1').';port='.(app_env('DB_PORT') ?: '3306').';dbname='.(app_env('DB_NAME') ?: 'escalate_classes').';charset=utf8mb4',app_env('DB_USER') ?: '',app_env('DB_PASSWORD') ?: '',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false]);
     if($db){$db->exec("SET time_zone = ".$db->quote(date('P')));}
     return $db;
 }
