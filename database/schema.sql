@@ -18,3 +18,10 @@ INSERT INTO classes(name,description,display_order) VALUES ('Class 7','Build und
 INSERT INTO classes(name,description,display_order) VALUES ('Class 8','Build understanding through consistent practice.',8);
 INSERT INTO classes(name,description,display_order) VALUES ('Class 9','Build understanding through consistent practice.',9);
 INSERT INTO classes(name,description,display_order) VALUES ('Class 10','Build understanding through consistent practice.',10);
+CREATE TABLE password_reset_tokens(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,admin_id BIGINT UNSIGNED NOT NULL,token_hash CHAR(64) UNIQUE NOT NULL,expires_at DATETIME NOT NULL,used_at DATETIME NULL,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY(admin_id) REFERENCES admins(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE notification_logs(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,enquiry_id BIGINT UNSIGNED NULL,notification_type VARCHAR(40) NOT NULL,recipient VARCHAR(254) NOT NULL,subject VARCHAR(200) NOT NULL,body TEXT NOT NULL,status ENUM('pending','sent','failed') NOT NULL DEFAULT 'pending',attempt_count INT NOT NULL DEFAULT 0,last_error_summary VARCHAR(200) NULL,created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,FOREIGN KEY(enquiry_id) REFERENCES admission_enquiries(id) ON DELETE SET NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE media(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,stored_filename VARCHAR(80) NOT NULL UNIQUE,original_filename VARCHAR(255) NOT NULL,mime_type VARCHAR(80) NOT NULL,file_size INT UNSIGNED NOT NULL,alt_text VARCHAR(250) NOT NULL,uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE image_assignments(slot VARCHAR(30) PRIMARY KEY,media_id BIGINT UNSIGNED NOT NULL,FOREIGN KEY(media_id) REFERENCES media(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ALTER TABLE academic_sessions ADD start_date DATE NULL,ADD end_date DATE NULL;
+
+ALTER TABLE admins ADD session_version INT NOT NULL DEFAULT 1;
