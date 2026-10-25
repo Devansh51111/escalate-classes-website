@@ -9,7 +9,7 @@ function enquiry_filter(): array {
 }
 function enqueue_email(string $kind,string $to,string $subject,string $body,?int $enquiry=null):void {
  if(!filter_var($to,FILTER_VALIDATE_EMAIL))return;
- $q=db()->prepare('INSERT INTO notification_logs(enquiry_id,notification_type,recipient,subject,body,status) VALUES(?,?,?,?,?,?)');$q->execute([$enquiry,$kind,$to,$subject,$body,'pending']);
+ $q=db()->prepare('INSERT IGNORE INTO notification_logs(enquiry_id,notification_type,recipient,subject,body,status) VALUES(?,?,?,?,?,?)');$q->execute([$enquiry,$kind,$to,$subject,$body,'pending']);
 }
 function smtp_send(string $to,string $subject,string $body):void {
  $host=(string)getenv('SMTP_HOST');$from=(string)getenv('SMTP_FROM');$port=(int)(getenv('SMTP_PORT')?:587);$mode=getenv('SMTP_ENCRYPTION')?:'tls';

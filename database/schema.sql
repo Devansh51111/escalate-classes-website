@@ -27,3 +27,6 @@ ALTER TABLE academic_sessions ADD start_date DATE NULL,ADD end_date DATE NULL;
 ALTER TABLE admins ADD session_version INT NOT NULL DEFAULT 1;
 
 ALTER TABLE admission_enquiries ADD source VARCHAR(40) NOT NULL DEFAULT 'website';
+
+ALTER TABLE admission_enquiries ADD parent_email VARCHAR(254) NULL;
+ALTER TABLE notification_logs ADD UNIQUE KEY unique_enquiry_notification(enquiry_id,notification_type);

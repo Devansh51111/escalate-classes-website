@@ -15,9 +15,33 @@ print('Login pass')
 import subprocess,os
 second=subprocess.run([os.environ['PHP_BIN'],os.environ['PROJECT_ROOT']+'/bin/create-admin.php','secondadmin','second@example.invalid'],input='OnlyDisposableTest123!\n',text=True,capture_output=True,env=os.environ);assert second.returncode!=0 and 'already exists' in second.stderr
 r=post('settings',dict(action='add_session',name='2026–2027',is_active='1'));assert r.status_code==200
-r=post('admissions',dict(action='enquire',parent_name='<script>alert(1)</script>',parent_phone='+919999999999',student_name='Test Student',class_id='1',session_id='1',current_school='Test School',message='Acceptance only'));assert 'Your enquiry has been received' in r.text,r.text
+r=post('admissions',dict(action='enquire',parent_email='parent@example.invalid',parent_name='<script>alert(1)</script>',parent_phone='+919999999999',student_name='Test Student',class_id='1',session_id='1',current_school='Test School',message='Acceptance only'));assert 'Your enquiry has been received' in r.text,r.text
 r=get('dashboard');assert '&lt;script&gt;' in r.text and '<script>alert(1)</script>' not in r.text
-print('Session creation, enquiry persistence and escaped output pass')
+code="require '"+os.environ['PROJECT_ROOT']+"/app/bootstrap.php'; require '"+os.environ['PROJECT_ROOT']+"/app/features.php'; enqueue_email('parent_receipt','parent@example.invalid','Duplicate','Must not duplicate',1); echo db()->query(\"SELECT COUNT(*) FROM notification_logs WHERE notification_type='parent_receipt' AND enquiry_id=1\")->fetchColumn();"
+assert subprocess.check_output([os.environ['PHP_BIN'],'-r',code],env=os.environ,text=True).strip()=='1'
+assert 'parent@example.invalid' in get('enquiry&id=1').text
+r=post('admissions',dict(action='enquire',parent_email='invalid-email',parent_name='P',student_name='S',parent_phone='9999999999',class_id='1',session_id='1'));assert 'valid parent email' in r.text
+import socketserver,threading
+received=[]
+class MockSMTP(socketserver.StreamRequestHandler):
+ def handle(self):
+  self.wfile.write(b'220 local-test\r\n');data=False;message=[]
+  for line in self.rfile:
+   if data:
+    if line==b'.\r\n':data=False;received.append(b''.join(message));self.wfile.write(b'250 accepted\r\n')
+    else:message.append(line)
+   elif line.startswith(b'EHLO'):self.wfile.write(b'250 local-test\r\n')
+   elif line.startswith((b'MAIL',b'RCPT')):self.wfile.write(b'250 ok\r\n')
+   elif line.startswith(b'DATA'):self.wfile.write(b'354 send\r\n');data=True
+   elif line.startswith(b'QUIT'):self.wfile.write(b'221 bye\r\n');break
+class Server(socketserver.TCPServer):allow_reuse_address=True
+server=Server(('127.0.0.1',8025),MockSMTP);threading.Thread(target=server.serve_forever,daemon=True).start()
+try:
+ for _ in range(2):subprocess.run([os.environ['PHP_BIN'],os.environ['PROJECT_ROOT']+'/bin/process-mail.php','--send','--parent-receipts'],env=os.environ,check=True,capture_output=True)
+ assert len(received)==1 and b'This is not an admission confirmation' in received[0]
+finally:server.shutdown();server.server_close()
+print('Synthetic parent receipt accepted by local SMTP exactly once across two worker runs')
+print('Session creation, enquiry persistence, optional email validation/storage and unique receipt queue pass')
 r=post('enquiry&id=1',dict(action='save_enquiry',id='1',status='Follow-up Required',follow_up='2026-10-25T10:00',note='Test internal note'));assert 'Test internal note' in r.text
 print('Enquiry status, follow-up, note pass')
 r=s.get(base+'?page=export&status=Follow-up+Required');assert 'Test Student' in r.text and "'+919999999999" in r.text,r.text
@@ -83,6 +107,11 @@ r=post('enquiry&id=1',dict(action='delete_enquiry',id='1',confirmation='WRONG'))
 r=post('enquiry&id=1',dict(action='archive',id='1'));assert 'Test Student' not in r.text
 r=post('enquiry&id=1',dict(action='delete_enquiry',id='1',confirmation='DELETE'));assert 'Test Student' not in r.text
 print('Deletion confirmation, archive and permanent deletion pass')
+other=requests.Session();r=other.get(base+'?page=admissions');token=re.search(r'name="csrf" value="([^"]+)"',r.text)[1]
+r=other.post(base+'?page=admissions',data=dict(csrf=token,action='enquire',parent_name='Blank email parent',parent_phone='8888888888',student_name='Blank email student',class_id='1',session_id='1',parent_email=''));assert 'Your enquiry has been received' in r.text
+code="require '"+os.environ['PROJECT_ROOT']+"/app/bootstrap.php';echo db()->query(\"SELECT COUNT(*) FROM notification_logs WHERE notification_type='parent_receipt'\")->fetchColumn();"
+assert subprocess.check_output([os.environ['PHP_BIN'],'-r',code],env=os.environ,text=True).strip()=='0'
+print('Blank optional email accepted without queueing receipt')
 r=post('dashboard',dict(action='logout'));assert 'Welcome back' in r.text
 assert 'Welcome back' in s.get(base+'?page=manage').text
 print('Logout and protected management routes pass')
