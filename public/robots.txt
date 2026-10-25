@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /*page=admin
+Disallow: /*page=dashboard
+Disallow: /*page=enquiry
+Disallow: /*page=settings
+Disallow: /*page=manage
+Disallow: /*page=export
+Disallow: /*page=forgot
+Disallow: /*page=reset
+Disallow: /uploads/

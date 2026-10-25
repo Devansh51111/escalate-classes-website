@@ -13,4 +13,4 @@ Back up public/uploads separately, preserving filenames. Keep .env privately out
 6. Log in with a test administrator, create a synthetic enquiry and export CSV. Confirm historical session relationships.
 7. Only after reviewing the test, plan an explicit maintenance window for a real recovery. Never run an automatic web restore over current records.
 
-SQL backup download was executed against synthetic records. Import-and-compare restore remains a required acceptance check. Upload files are not included in database backups.
+SQL backup download and import into a separate recovery database were executed against synthetic records. Enquiry, note and class counts matched. A full manual image/settings recovery drill remains recommended. Upload files are not included in database backups.

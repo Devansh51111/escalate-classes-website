@@ -1,0 +1,3 @@
+# Acceptance tests
+http_acceptance.py was run against a disposable MariaDB 10.6 database and native PHP 8.4 local server. It uses only synthetic test records. Do not run against a real database: it creates/changes/deletes test records, changes the test admin password and downloads a backup.
+Requires Python requests and Pillow. Set PROJECT_ROOT to the absolute project directory and PHP_BIN to the local PHP executable. Serve public/ on 127.0.0.1:8087, import schema into an empty disposable database, create testadmin/admin@example.invalid with the synthetic password from the test, set DB environment and APP_URL. The hardcoded test passwords are disposable test values, not application defaults or credentials.
