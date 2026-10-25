@@ -28,12 +28,13 @@ function db(): PDO {
     if (getenv('DB_USER') === false || getenv('DB_USER') === '') throw new RuntimeException('Database user is not configured');
     if (!extension_loaded('pdo_mysql')) throw new RuntimeException('MySQL driver unavailable');
     if (!$db) $db = new PDO('mysql:host='.(getenv('DB_HOST') ?: '127.0.0.1').';port='.(getenv('DB_PORT') ?: '3306').';dbname='.(getenv('DB_NAME') ?: 'escalate_classes').';charset=utf8mb4',getenv('DB_USER') ?: '',getenv('DB_PASSWORD') ?: '',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_DEFAULT_FETCH_MODE=>PDO::FETCH_ASSOC,PDO::ATTR_EMULATE_PREPARES=>false]);
+    if($db){$db->exec("SET time_zone = ".$db->quote(date('P')));}
     return $db;
 }
 function csrf(): string { return $_SESSION['csrf'] ??= bin2hex(random_bytes(32)); }
 function verify_csrf(): void { if (!hash_equals(csrf(), (string)($_POST['csrf'] ?? ''))) { http_response_code(403); exit('The form expired. Reload and try again.'); } }
 function redirect(string $url): never { header('Location: '.$url, true, 303); exit; }
-function admin(): bool { return isset($_SESSION['admin_id']) && (time()-(int)($_SESSION['last_seen'] ?? 0))<1800; }
+function admin(): bool { if(!isset($_SESSION['admin_id'])||(time()-(int)($_SESSION['last_seen']??0))>=1800)return false;$q=db()->prepare('SELECT session_version FROM admins WHERE id=?');$q->execute([$_SESSION['admin_id']]);return (int)$q->fetchColumn()===(int)($_SESSION['session_version']??-1); }
 function require_admin(): void { if (!admin()) { unset($_SESSION['admin_id']); redirect('?page=admin'); } $_SESSION['last_seen']=time(); }
 function setting(string $key, string $fallback=''): string { static $settings; if ($settings===null) { try{$settings=db()->query('SELECT setting_key,setting_value FROM site_settings')->fetchAll(PDO::FETCH_KEY_PAIR);}catch(Throwable $e){$settings=[];} } return (string)($settings[$key] ?? $fallback); }
 function content(string $key,string $fallback): string { static $items; if($items===null){try{$items=db()->query('SELECT content_key,content_value FROM site_content')->fetchAll(PDO::FETCH_KEY_PAIR);}catch(Throwable $e){$items=[];}}return (string)($items[$key]??$fallback); }
