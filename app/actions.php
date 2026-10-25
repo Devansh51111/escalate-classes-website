@@ -9,9 +9,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   if(!$form['parent_name']||!$form['student_name'])$errors[]='Enter the parent and student names.';
   if(!preg_match('/^\+?[0-9]{10,15}$/',$form['parent_phone']))$errors[]='Enter a valid phone number.';
   $form['parent_email']=trim((string)($_POST['parent_email']??''));if($form['parent_email']!==''&&(strlen($form['parent_email'])>254||!filter_var($form['parent_email'],FILTER_VALIDATE_EMAIL)||preg_match('/[\r\n]/',$form['parent_email'])))$errors[]='Enter a valid parent email, or leave it empty.';
-  $class=(int)($_POST['class_id']??0);$session=(int)($_POST['session_id']??0);
+  $class=(int)($_POST['class_id']??0);$availableSessions=sessions();$session=(int)($availableSessions[0]['id']??0);
   $activeClasses=array_column(all_classes(),'id');$activeSessions=array_column(sessions(),'id');
-  if(!in_array($class,array_map('intval',$activeClasses),true)||!in_array($session,array_map('intval',$activeSessions),true))$errors[]='Choose an available class and active academic session.';
+  if(!in_array($class,array_map('intval',$activeClasses),true)||!in_array($session,array_map('intval',$activeSessions),true))$errors[]='Enquiries are not available right now. Please contact the institute.';
   if(time()-(int)($_SESSION['last_enquiry']??0)<30)$errors[]='Please wait a moment before sending another enquiry.';
   if(!$errors){
    try{$pdo=db();$pdo->beginTransaction();

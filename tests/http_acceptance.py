@@ -68,9 +68,9 @@ for qa in ['dashboard','enquiry&id=1','settings','manage','manage&section=announ
 
 # Additional acceptance tests below use disposable database/SMTP only.
 r=post('manage',dict(action='edit_session',id='1',name='Closed intake',start_date='2026-01-01',end_date='2026-12-31'));assert 'Inactive' in get('settings').text
-assert 'No academic session is available yet' in get('admissions').text
+assert 'Enquiries are not available right now' in get('admissions').text
 print('Session closure blocks public intake and preserves existing enquiry pass')
-r=post('manage',dict(action='edit_session',id='1',name='Reopened intake',start_date='',end_date='',is_active='1'));assert 'No academic session' not in get('admissions').text
+r=post('manage',dict(action='edit_session',id='1',name='Reopened intake',start_date='',end_date='',is_active='1'));assert 'Enquiries are not available' not in get('admissions').text
 r=post('settings',dict(action='add_class',name='Special Class',description='New course',display_order='0',is_active='1'));assert 'Special Class' in get('classes').text
 assert 'Special Class' in get('home').text
 r=post('settings',dict(action='save_content',hero_heading='Synthetic headline',hero_description='Text <script>bad</script>',about_heading='Synthetic about',about_description='Test',contact_heading='Test',admissions_button='Apply',class_button='Classes'))
@@ -112,6 +112,13 @@ r=other.post(base+'?page=admissions',data=dict(csrf=token,action='enquire',paren
 code="require '"+os.environ['PROJECT_ROOT']+"/app/bootstrap.php';echo db()->query(\"SELECT COUNT(*) FROM notification_logs WHERE notification_type='parent_receipt'\")->fetchColumn();"
 assert subprocess.check_output([os.environ['PHP_BIN'],'-r',code],env=os.environ,text=True).strip()=='0'
 print('Blank optional email accepted without queueing receipt')
+r=post('settings',dict(action='add_session',name='Latest automatic intake',is_active='1'));assert r.status_code==200
+assert 'name="session_id"' not in get('admissions').text
+other=requests.Session();r=other.get(base+'?page=admissions');token=re.search(r'name="csrf" value="([^"]+)"',r.text)[1]
+r=other.post(base+'?page=admissions',data=dict(csrf=token,action='enquire',parent_name='Automatic session',parent_phone='7777777777',student_name='Latest session learner',class_id='1',session_id='1'));assert 'Your enquiry has been received' in r.text
+code="require '"+os.environ['PROJECT_ROOT']+"/app/bootstrap.php';echo db()->query(\"SELECT academic_session_id FROM admission_enquiries WHERE student_name='Latest session learner'\")->fetchColumn();"
+assert subprocess.check_output([os.environ['PHP_BIN'],'-r',code],env=os.environ,text=True).strip()=='2'
+print('Public session selector absent; multiple active sessions select latest server-side and ignore forged old ID')
 r=post('dashboard',dict(action='logout'));assert 'Welcome back' in r.text
 assert 'Welcome back' in s.get(base+'?page=manage').text
 print('Logout and protected management routes pass')
