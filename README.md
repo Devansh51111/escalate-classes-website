@@ -22,7 +22,7 @@ SMTP delivery and parent receipts, password recovery, gallery/media uploads, ann
 Phone and contact placeholders are intentional. Earlier planning content conflicts on founder identity; no founder name has been assumed. No student records, real credentials or passwords are included.
 
 ## Verification status
-No PHP executable or MySQL server was available at initial creation. Do not treat the source as runtime-tested until local checks below are completed. The separate visual preview was rendered and navigated, but that does not validate PHP execution.
+PHP 8.5 WebAssembly syntax checks passed for all five PHP files. JavaScript syntax checking passed. Six database-free GET page smoke tests and invalid-CSRF rejection also passed under PHP 8.5 WebAssembly. MySQL connections and end-to-end application checks remain unverified. Do not treat this as a tested release. The separate visual preview was rendered and navigated, but that does not validate PHP execution.
 
 ## Required acceptance checks
 - Run PHP syntax checks: `php -l` for every `.php` file, then `php bin/verify.php`.
@@ -33,3 +33,5 @@ No PHP executable or MySQL server was available at initial creation. Do not trea
 - Test search/filter/pagination, notes, follow-up and archive. Verify non-admin access fails.
 - Export CSV and verify spreadsheet formula inputs are prefixed safely.
 - Review 320/390/1280px layouts and keyboard interaction.
+
+Run the database-free smoke tests from the project root with `python tests/smoke.py /path/to/php`. No test creates records.
