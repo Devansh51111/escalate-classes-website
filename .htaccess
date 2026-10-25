@@ -1,0 +1,5 @@
+Options -Indexes
+RedirectMatch 404 ^/(app|bin|database|storage|tests)/
+<FilesMatch "^\.">
+Require all denied
+</FilesMatch>
