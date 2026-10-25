@@ -18,3 +18,5 @@ body{background:#faf7ee;margin:0;font:15px/1.7 Arial,sans-serif;color:#30322f}.f
 .reviews .review-track{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:18px;overscroll-behavior-x:contain}.reviews .review-track article{flex:0 0 42%;min-width:260px;max-width:400px;scroll-snap-align:start;padding:22px;border:1px solid #e3d5cb}.reviews .review-track p{max-width:none}.review-controls{display:flex;gap:18px;align-items:center;margin:12px 0 26px}.review-controls button{background:transparent;border:1px solid #c6b7a9;width:44px;height:44px;color:inherit;font-size:20px;cursor:pointer}.review-controls span{font-size:11px;color:#716a64}@media(max-width:760px){.reviews .review-track article{flex-basis:87%;min-width:0;max-width:none}}
 
 .about-grid .exterior-photo{aspect-ratio:1010/445;object-fit:contain;max-height:none;filter:none}
+
+.reviews .review-track{scrollbar-width:none;-ms-overflow-style:none}.reviews .review-track::-webkit-scrollbar{display:none}
