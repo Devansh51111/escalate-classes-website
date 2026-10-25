@@ -13,11 +13,12 @@ date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'Asia/Kolkata');
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 ini_set('error_log', $root.'/storage/logs/php.log');
+$cspNonce=bin2hex(random_bytes(16));
 if (PHP_SAPI !== 'cli') {
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: same-origin');
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+header("Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self' 'nonce-{$cspNonce}'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
 }
 ini_set('session.use_strict_mode', '1');
 session_set_cookie_params(['httponly'=>true,'samesite'=>'Lax','secure'=>filter_var(getenv('SESSION_SECURE') ?: 'false',FILTER_VALIDATE_BOOLEAN)]);

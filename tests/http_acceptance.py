@@ -1,3 +1,4 @@
+import os
 import requests,re
 s=requests.Session();base='http://127.0.0.1:8087/'
 def get(page):
@@ -11,6 +12,8 @@ r=s.post(base+'?page=admin',data={'action':'login','csrf':'bad'});assert r.statu
 print('CSRF rejection pass')
 r=post('admin',dict(action='login',identity='testadmin',password='OnlyDisposableTest123!'));assert 'Overview' in r.text,r.text
 print('Login pass')
+import subprocess,os
+second=subprocess.run([os.environ['PHP_BIN'],os.environ['PROJECT_ROOT']+'/bin/create-admin.php','secondadmin','second@example.invalid'],input='OnlyDisposableTest123!\n',text=True,capture_output=True,env=os.environ);assert second.returncode!=0 and 'already exists' in second.stderr
 r=post('settings',dict(action='add_session',name='2026–2027',is_active='1'));assert r.status_code==200
 r=post('admissions',dict(action='enquire',parent_name='<script>alert(1)</script>',parent_phone='+919999999999',student_name='Test Student',class_id='1',session_id='1',current_school='Test School',message='Acceptance only'));assert 'Your enquiry has been received' in r.text,r.text
 r=get('dashboard');assert '&lt;script&gt;' in r.text and '<script>alert(1)</script>' not in r.text
@@ -33,13 +36,29 @@ check=subprocess.check_output(['mysql','--protocol=TCP','-h127.0.0.1','-P3307','
 print('Backup imported into separate recovery DB and enquiry/note/class counts match')
 
 print('INITIAL DATABASE ACCEPTANCE PASSED')
+from pathlib import Path
+Path('/tmp/escalate-acceptance-qa').mkdir(exist_ok=True)
+for qa in ['dashboard','enquiry&id=1','settings','manage','manage&section=announcements','manage&section=media','manage&section=backup','manage&section=email','admissions','about','home']:
+ html=get(qa).text.replace('href="assets/','href="file:///home/sandbox/escalate-classes/public/assets/').replace('src="assets/','src="file:///home/sandbox/escalate-classes/public/assets/').replace('src="uploads/','src="file:///home/sandbox/escalate-classes/public/uploads/')
+ Path('/tmp/escalate-acceptance-qa/'+qa.replace('&','_').replace('=','-')+'.html').write_text(html)
+
 # Additional acceptance tests below use disposable database/SMTP only.
 r=post('manage',dict(action='edit_session',id='1',name='Closed intake',start_date='2026-01-01',end_date='2026-12-31'));assert 'Inactive' in get('settings').text
 assert 'No academic session is available yet' in get('admissions').text
 print('Session closure blocks public intake and preserves existing enquiry pass')
 r=post('manage',dict(action='edit_session',id='1',name='Reopened intake',start_date='',end_date='',is_active='1'));assert 'No academic session' not in get('admissions').text
 r=post('settings',dict(action='add_class',name='Special Class',description='New course',display_order='0',is_active='1'));assert 'Special Class' in get('classes').text
-print('Class addition pass')
+assert 'Special Class' in get('home').text
+r=post('settings',dict(action='save_content',hero_heading='Synthetic headline',hero_description='Text <script>bad</script>',about_heading='Synthetic about',about_description='Test',contact_heading='Test',admissions_button='Apply',class_button='Classes'))
+assert 'Synthetic headline' in get('home').text and '&lt;script&gt;' in get('home').text
+assert '<script>bad</script>' not in get('home').text
+assert 'EducationalOrganization' in get('home').text
+assert 'review-controls' not in get('home').text and 'Swipe to explore' not in get('home').text
+assert 'page=admin' not in get('sitemap').text
+r=post('settings',dict(action='save_settings',institute_name='Escalate Classes',city='Indore',address='Synthetic test address',timezone='Not/AZone'));assert 'valid timezone' in r.text
+r=post('settings',dict(action='save_settings',institute_name='Escalate Classes',city='Indore',address='Synthetic test address',timezone='Asia/Kolkata'));assert r.status_code==200
+assert 'Recent activity' in get('dashboard').text
+print('Class addition, dynamic home, structured content round-trip, escaping, schema and sitemap pass')
 r=post('manage',dict(action='save_announcement',title='Future notice',body='Not visible',is_published='1',starts_at='2099-01-01T00:00',ends_at=''));assert 'Future notice' not in get('home').text
 print('Announcement publication window pass')
 from PIL import Image
@@ -53,8 +72,8 @@ r=s.post(base+'?page=manage&section=media',data={'csrf':token,'action':'upload_i
 print('Valid image upload, assignment and spoofed-image rejection pass')
 r=post('forgot',dict(action='request_reset',identity='admin@example.invalid'));assert 'If the address is registered' in r.text
 import subprocess,os
-php=os.environ.get('PHP_BIN','php')
-project=os.environ['PROJECT_ROOT'];code="require '"+project+"/app/bootstrap.php'; echo db()->query(\"SELECT body FROM notification_logs WHERE notification_type='password_reset' ORDER BY id DESC LIMIT 1\")->fetchColumn();"
+php=os.environ['PHP_BIN']
+code="require '"+os.environ['PROJECT_ROOT']+"/app/bootstrap.php'; echo db()->query(\"SELECT body FROM notification_logs WHERE notification_type='password_reset' ORDER BY id DESC LIMIT 1\")->fetchColumn();"
 mail=subprocess.check_output([php,'-r',code],env=os.environ,text=True);token=re.search(r'token=([a-f0-9]{64})',mail)[1]
 r=post('reset&token='+token,dict(action='reset_password',token=token,password='DisposableReplacement123!'));assert 'Password updated' in r.text,r.text
 r=post('reset&token='+token,dict(action='reset_password',token=token,password='AnotherDisposable123!'));assert 'invalid or expired' in r.text
