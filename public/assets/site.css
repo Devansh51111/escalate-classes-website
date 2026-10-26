@@ -53,3 +53,6 @@ nav a:hover,nav a:focus-visible{color:#98564f}
 a.primary{transition:background-color .2s ease}
 a.primary:hover,a.primary:focus-visible{background:#4a4d49;color:#fff}
 nav a:focus-visible,a.primary:focus-visible{outline:2px solid #98564f;outline-offset:3px}
+
+/* Classes page: single Enquire button per card */
+.class-grid .class-enquire{margin-top:20px;min-height:44px;padding:12px 22px;gap:14px}
