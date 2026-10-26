@@ -56,3 +56,8 @@ nav a:focus-visible,a.primary:focus-visible{outline:2px solid #98564f;outline-of
 
 /* Classes page: single Enquire button per card */
 .class-grid .class-enquire{margin-top:20px;min-height:44px;padding:12px 22px;gap:14px}
+
+.contact-grid .primary{margin-top:24px}
+
+a.brand:hover{text-decoration:none}
+a.brand:focus-visible{outline:2px solid #98564f;outline-offset:4px}
