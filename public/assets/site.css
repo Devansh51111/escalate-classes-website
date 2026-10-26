@@ -61,3 +61,7 @@ nav a:focus-visible,a.primary:focus-visible{outline:2px solid #98564f;outline-of
 
 a.brand:hover{text-decoration:none}
 a.brand:focus-visible{outline:2px solid #98564f;outline-offset:4px}
+
+.class-grid article{display:flex;flex-direction:column;align-items:flex-start}
+.class-grid article p{margin-bottom:20px}
+.class-grid .class-enquire{margin-top:auto}
